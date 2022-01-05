@@ -124,7 +124,7 @@ function get_length {
 
 #### COMMIT SCRIPT
 
-
+repo=$(git config --get remote.origin.url)
 branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 staged=$(git diff --name-only --staged)
 stagedstatus=$(git diff --name-status --staged)
@@ -188,6 +188,7 @@ function printGroup() {
 printf "\n"
 printf "\t${bold}${blue}Sil${reset}${bold}Commit${reset}"
 printf "\n"
+printf "\n\trepo\t ${bold}$repo${reset}"
 printf "\n\tbranch\t ${bold}$branch${reset}"
 printf "\n\tchanges\t ${bold}${stageLength}${reset}"
 printf "\n"
