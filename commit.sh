@@ -130,13 +130,60 @@ staged=$(git diff --name-only --staged)
 stagedstatus=$(git diff --name-status --staged)
 stageLength=$(get_length $staged)
 stagedArray=()
+
+stagedAdded=()
+stagedModified=()
+stagedDeleted=()
+stagedRenamed=()
+
+
+
+CURRENT="A"
+RENAMED=""
+printf "\n"
 for file in $stagedstatus
 do
-    stagedArray+=($file)
+    if [ "$file" == "A" ]; then  
+        CURRENT="A"
+    elif [ "$file" == "M" ]; then
+        CURRENT="M"
+    elif [ "$file" == "D" ]; then
+        CURRENT="D"
+    elif [ "$file" == "R100" ]; then
+        CURRENT="R"
+    elif [ "$file" != "A" ] || [ "$file" != "M" ] || [ "$file" != "D" ] || [ "$file" != "R100" ]; then
+        # printf "\n\n-----------------------------------------"
+        # printf "\n"
+        if [ $CURRENT = "A" ]; then
+            stagedAdded+=("$file")
+        elif [ $CURRENT = "M" ]; then
+            stagedModified+=("$file")
+        elif [ $CURRENT = "D" ]; then
+            stagedDeleted+=("$file")
+        elif [ $CURRENT = "R" ]; then
+            if [ "$RENAMED" == "" ]; then
+                RENAMED=$file                             
+            else                 
+                stagedRenamed+=("${RENAMED}${green}→${reset}${file}")
+                RENAMED=""    
+            fi
+        fi
+    fi
 done
 
+function printTitle {
+    if [ "$2" != "0" ]; then
+        printf "\n\n\t${3}${bold}${1}${reset} ${3}($2):${reset}"
+    fi
+}
 
-
+function printGroup() {
+   arr=("$@")
+   for i in "${arr[@]}";
+      do
+        printf "\n\t- $i"
+      done
+}
 
 printf "\n"
 printf "\t${bold}${blue}Sil${reset}${bold}Commit${reset}"
@@ -145,7 +192,6 @@ printf "\n\tbranch\t ${bold}$branch${reset}"
 printf "\n\tchanges\t ${bold}${stageLength}${reset}"
 printf "\n"
 printf "\n"
-# echo '\033[38;5;1mnormal \033[02;38;5;1mdim \033[01;38;5;1mbold'
 
 if [ -z "$staged" ]; then
     printf "\tThere are no staged files."
@@ -155,37 +201,18 @@ if [ -z "$staged" ]; then
 fi
 
 printf "\t${bold}Staged files${reset}"
-printf "\n"
 
+printTitle 'added' ${#stagedAdded[@]} ${green}
+printGroup "${stagedAdded[@]}" 
+printTitle 'modified' ${#stagedModified[@]} ${yellow}
+printGroup "${stagedModified[@]}"
+printTitle 'deleted' ${#stagedDeleted[@]} ${red}
+printGroup "${stagedDeleted[@]}"
+printTitle 'renamed' ${#stagedRenamed[@]} ${blue}
+printGroup "${stagedRenamed[@]}"
 
-x=0
-xt=${#stagedArray[@]}
-while [ $x -le $xt ]
-do    
-    if [ "${stagedArray[$x]}" = "M" ]; then
-        echo "\t- ${yellow}${stagedArray[$x+1]}${reset}"
-    elif [ "${stagedArray[$x]}" = "A" ]; then 
-        echo "\t+ ${green}${stagedArray[$x+1]}${reset}"   
-    elif [ "${stagedArray[$x]}" = "A" ]; then 
-        echo "\t+ ${green}${stagedArray[$x+1]}${reset}"
-    fi
-    x=$(( $x + 2 ))
-done
-
-
-# temporary exit!
 printf "\n"
 printf "\n"
-printf "\n"
-exit 0;
-
-
-# len=${#stagedstatus[@]}
-# for (( i=0; i<$len; i++ )); do 
-#     input="${stagedstatus[$i]}"  
-#     echo ${input%   *}
-# done
-
 
 # SHOW ADVANCED FIELDS
 question "Advanced?" "y/N"
@@ -254,7 +281,7 @@ COMMIT_MSG2=""
 COMMIT_FULL_MSG="[$BRANCH_TYPE]: $MESSAGE"
 
 
-if $ADVANCED; then
+if [ $ADVANCED = 1 ]; then
     COMMIT_MSG1="$BRANCH_TYPE($PACKAGE): $MESSAGE"
     COMMIT_MSG2="Closes #${TEAM}-${TICKET}"
 
