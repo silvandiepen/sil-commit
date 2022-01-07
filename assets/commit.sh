@@ -54,7 +54,7 @@ function select_option {
 
     # determine current screen position for overwriting the options
     local lastrow=`get_cursor_row`
-    local startrow=$(($lastrow - $#))
+    local startrow=$(($lastrow-$#))
 
     # ensure cursor and input echoing back on upon a ctrl+c during read -s
     trap "cursor_blink_on; stty echo; printf '\n'; exit" 2
